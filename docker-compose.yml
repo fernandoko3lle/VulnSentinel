@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  vulnsentinel:
+    build: .
+    container_name: vulnsentinel
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app
+    restart: always

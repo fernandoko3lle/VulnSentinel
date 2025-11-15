@@ -1,7 +1,8 @@
 fastapi
 uvicorn
 aiohttp
-pydantic
 jinja2
 python-multipart
+pydantic
 pytest
+pytest-asyncio
