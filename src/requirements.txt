@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+aiohttp
+pydantic
+jinja2
+python-multipart
+pytest

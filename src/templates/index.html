@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>VulnSentinel – Web Security Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-card: #0b1220;
+      --bg-card-alt: #020617;
+      --border: #1e293b;
+      --accent: #6366f1;
+      --accent-soft: rgba(99,102,241,0.15);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #ef4444;
+      --danger-soft: rgba(239,68,68,0.15);
+      --success: #22c55e;
+      --warning: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 2rem;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #111827 0, #020617 40%, #000 100%);
+      color: var(--text);
+    }
+
+    h1 {
+      margin: 0 0 0.25rem;
+    }
+
+    .subtitle {
+      margin: 0 0 1.5rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .layout {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: linear-gradient(135deg, rgba(15,23,42,0.98), rgba(15,23,42,0.92));
+      border-radius: 1rem;
+      padding: 1.5rem 1.75rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 18px 45px rgba(0,0,0,0.6);
+      margin-bottom: 1.5rem;
+    }
+
+    .card--soft {
+      background: var(--bg-card);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 0.35rem;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border-radius: 0.6rem;
+      border: 1px solid var(--border);
+      background: var(--bg-card-alt);
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-soft);
+    }
+
+    button {
+      margin-top: 0.75rem;
+      padding: 0.6rem 1.4rem;
+      border-radius: 0.75rem;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #f9fafb;
+      box-shadow: 0 8px 25px rgba(79,70,229,0.55);
+      transition: transform 0.08s ease-out, box-shadow 0.1s ease-out, filter 0.1s ease-out;
+    }
+
+    button:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px rgba(79,70,229,0.75);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 16px rgba(79,70,229,0.5);
+    }
+
+    .score-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .score-pill {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.3rem;
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(129,140,248,0.5);
+      font-size: 0.85rem;
+    }
+
+    .score-value {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .endpoint {
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.85rem;
+      background: var(--bg-card-alt);
+      padding: 0.35rem 0.6rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      word-break: break-all;
+    }
+
+    .results-header {
+      margin-bottom: 1rem;
+    }
+
+    .results-header h2 {
+      margin: 0 0 0.25rem;
+      font-size: 1.15rem;
+    }
+
+    .results-header small {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+      gap: 1.25rem;
+      margin-top: 0.75rem;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        padding: 1rem;
+      }
+      .grid-2 {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+    }
+
+    th, td {
+      padding: 0.45rem 0.4rem;
+      border-bottom: 1px solid #111827;
+    }
+
+    th {
+      text-align: left;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    tr:hover td {
+      background: rgba(15,23,42,0.85);
+    }
+
+    .badge {
+      padding: 0.1rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .sev-critica, .sev-crítica {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .sev-alta {
+      background: rgba(220,38,38,0.15);
+      color: #f87171;
+    }
+
+    .sev-média, .sev-media {
+      background: rgba(234,179,8,0.14);
+      color: var(--warning);
+    }
+
+    .sev-baixa {
+      background: rgba(22,163,74,0.15);
+      color: var(--success);
+    }
+
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+
+    .filters-row select,
+    .filters-row input {
+      padding: 0.35rem 0.6rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      background: var(--bg-card-alt);
+      color: var(--text);
+      font-size: 0.8rem;
+    }
+
+    .filters-row input::placeholder {
+      color: #6b7280;
+    }
+
+    .charts-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .chart-wrapper {
+      background: radial-gradient(circle at top, #020617 0, #020617 60%, #000 100%);
+      border-radius: 0.75rem;
+      padding: 0.75rem 0.75rem 0.5rem;
+      border: 1px solid rgba(31,41,55,0.9);
+      min-height: 220px;
+    }
+
+    .chart-title {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .empty-state {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div class="card">
+      <h1>VulnSentinel</h1>
+      <p class="subtitle">Scanner de segurança para aplicações web, com análise heurística de vulnerabilidades (OWASP-style).</p>
+
+      <form action="/scan-ui" method="get">
+        <label for="url">URL alvo</label>
+        <input
+          type="text"
+          id="url"
+          name="url"
+          placeholder="http://testphp.vulnweb.com/listproducts.php?cat=1"
+          required
+        />
+        <button type="submit">Rodar scan</button>
+      </form>
+    </div>
+
+    {% if results %}
+    <div class="card card--soft">
+      <div class="results-header">
+        <h2>Resultado para:</h2>
+        <div class="endpoint">{{ results.url }}</div>
+        <div class="score-row">
+          <div class="score-pill">
+            <span>Score de risco:</span>
+            <span class="score-value">{{ results.risk_score }}</span>
+            <span>/ 100</span>
+          </div>
+          <small>Score baseado na quantidade e severidade das vulnerabilidades detectadas.</small>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="filters-row">
+            <div>
+              <label for="severityFilter">Filtrar por severidade</label>
+              <select id="severityFilter">
+                <option value="all">Todas</option>
+                <option value="CRÍTICA">Crítica</option>
+                <option value="ALTA">Alta</option>
+                <option value="MÉDIA">Média</option>
+                <option value="BAIXA">Baixa</option>
+              </select>
+            </div>
+            <div>
+              <label for="searchFilter">Buscar por tipo / endpoint</label>
+              <input id="searchFilter" type="text" placeholder="ex: SQL Injection, /search.php" />
+            </div>
+          </div>
+
+          {% if results.findings %}
+          <table id="findingsTable">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Severidade</th>
+                <th>Endpoint</th>
+                <th>Parâmetro</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for f in results.findings %}
+              {% set sev_class = 'sev-' + f.severity.lower() %}
+              <tr data-severity="{{ f.severity }}">
+                <td>{{ f.vuln_type }}</td>
+                <td>
+                  <span class="badge {{ sev_class }}">
+                    {{ f.severity }}
+                  </span>
+                </td>
+                <td>{{ f.endpoint }}</td>
+                <td>{{ f.param }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p class="empty-state">Nenhuma vulnerabilidade detectada com as heurísticas atuais.</p>
+          {% endif %}
+        </div>
+
+        <div class="charts-container">
+          <div class="chart-wrapper">
+            <div class="chart-title">Distribuição por severidade</div>
+            <canvas id="severityChart"></canvas>
+          </div>
+          <div class="chart-wrapper">
+            <div class="chart-title">Distribuição por tipo de vulnerabilidade</div>
+            <canvas id="typeChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  {% if results %}
+  <script>
+    // Dados trazidos do backend
+    const findings = {{ results.findings | tojson | safe }};
+    const severityCounts = {{ results.severity_counts | tojson | safe }};
+    const typeCounts = {{ results.type_counts | tojson | safe }};
+
+    // --- Filtros de tabela ---
+    const severityFilter = document.getElementById("severityFilter");
+    const searchFilter = document.getElementById("searchFilter");
+    const table = document.getElementById("findingsTable");
+    const tbody = table ? table.querySelector("tbody") : null;
+
+    function applyFilters() {
+      if (!tbody) return;
+      const sev = severityFilter.value;
+      const query = searchFilter.value.toLowerCase();
+
+      for (const row of tbody.rows) {
+        const rowSev = row.getAttribute("data-severity");
+        const text = row.innerText.toLowerCase();
+
+        const matchSev = (sev === "all") || (rowSev === sev);
+        const matchQuery = query === "" || text.includes(query);
+
+        row.style.display = (matchSev && matchQuery) ? "" : "none";
+      }
+    }
+
+    if (severityFilter && searchFilter && tbody) {
+      severityFilter.addEventListener("change", applyFilters);
+      searchFilter.addEventListener("input", applyFilters);
+    }
+
+    // --- Gráfico de severidade ---
+    function buildSeverityChart() {
+      const ctx = document.getElementById("severityChart");
+      if (!ctx) return;
+
+      const order = ["CRÍTICA", "ALTA", "MÉDIA", "BAIXA"];
+      const labels = [];
+      const data = [];
+
+      for (const sev of order) {
+        if (severityCounts[sev] !== undefined) {
+          labels.push(sev);
+          data.push(severityCounts[sev]);
+        }
+      }
+
+      if (labels.length === 0) return;
+
+      new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels,
+          datasets: [{
+            data,
+          }],
+        },
+        options: {
+          plugins: {
+            legend: {
+              display: true,
+              labels: {
+                color: "#e5e7eb",
+                font: { size: 11 }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // --- Gráfico por tipo ---
+    function buildTypeChart() {
+      const ctx = document.getElementById("typeChart");
+      if (!ctx) return;
+
+      const labels = Object.keys(typeCounts);
+      const data = Object.values(typeCounts);
+
+      if (labels.length === 0) return;
+
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            data,
+          }],
+        },
+        options: {
+          scales: {
+            x: {
+              ticks: { color: "#e5e7eb", font: { size: 10 } },
+              grid: { display: false },
+            },
+            y: {
+              ticks: { color: "#9ca3af", stepSize: 1 },
+              grid: { color: "rgba(55,65,81,0.6)" },
+            }
+          },
+          plugins: {
+            legend: { display: false },
+          }
+        }
+      });
+    }
+
+    buildSeverityChart();
+    buildTypeChart();
+  </script>
+  {% endif %}
+</body>
+</html>

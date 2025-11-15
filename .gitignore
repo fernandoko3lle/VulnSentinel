@@ -1,0 +1,38 @@
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pye
+
+# virtualenv
+.venv/
+venv/
+ENV/
+env/
+
+# Jupyter (caso use no futuro)
+.ipynb_checkpoints
+
+# ---- Logs ----
+*.log
+scan_history.jsonl
+
+# ---- Editor files ----
+.vscode/
+*.swp
+*.swo
+
+# ---- OS / Trash ----
+.DS_Store
+Thumbs.db
+
+# ---- FastAPI / Uvicorn ----
+*.db
+*.sqlite3
+
+# ---- Docker ----
+*.pid
+
+# Pytest
+.pytest_cache/
